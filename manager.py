@@ -2,25 +2,40 @@ import json
 import os
 import subprocess
 
-def update_github():
-    print("\n--- Uploading to GitHub ---")
+def run_git(commands):
     try:
-        # These commands talk to Git on your computer
-        subprocess.run(["git", "add", "."], check=True)
-        subprocess.run(["git", "commit", "-m", "Added new video via Manager"], check=True)
-        subprocess.run(["git", "push"], check=True)
-        print("Successfully updated your website!")
-    except Exception as e:
-        print(f"Error updating GitHub: {e}")
+        # We use shell=True to help Windows handle the commands better
+        subprocess.run(commands, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Git Error: {e.stderr}")
+        return False
+    return True
+
+def update_github():
+    print("\n--- Syncing with GitHub ---")
+    
+    # 1. Pull latest (using master branch)
+    run_git(["git", "pull", "origin", "master"])
+    
+    # 2. Add, Commit, Push
+    print("Pushing updates to GitHub...")
+    if run_git(["git", "add", "."]):
+        # The commit message is automatic
+        if run_git(["git", "commit", "-m", "Automatic update via Portfolio Manager"]):
+            if run_git(["git", "push", "origin", "master"]):
+                print("✅ LIVE ON GITHUB!")
+                return
+    print("❌ Upload failed. Make sure you are connected to the internet.")
 
 def main():
-    print("----------------------")
-    print("PORTFOLIO MANAGER TOOL")
-    print("----------------------")
+    print("==========================")
+    print(" KISE PORTFOLIO MANAGER ")
+    print("==========================")
     
-    # Check if projects.json exists and is not empty
-    if os.path.exists('projects.json') and os.path.getsize('projects.json') > 0:
-        with open('projects.json', 'r') as f:
+    # Load existing data
+    filename = 'projects.json'
+    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+        with open(filename, 'r') as f:
             try:
                 data = json.load(f)
             except:
@@ -28,38 +43,33 @@ def main():
     else:
         data = []
 
-    # 1. Get Input from you
-    title = input("Project Title: ")
-    url = input("Video URL/Path (e.g. loganima/5.mp4): ")
+    # Get Input
+    title = input("\nProject Title: ")
+    url = input("Video Filename (e.g., loganima/1.mp4): ")
     desc = input("Description: ")
-    print("Categories: 1=logo, 2=text, 3=drawing")
-    cat_choice = input("Choice (1-3): ")
+    print("1: Logo | 2: Text | 3: Drawing")
+    cat_choice = input("Category (1-3): ")
     
     cats = {"1": "logo", "2": "text", "3": "drawing"}
     category = cats.get(cat_choice, "logo")
 
-    # 2. Add the new video to the list
-    new_project = {
+    # Update Data
+    data.append({
         "title": title,
         "url": url,
         "description": desc,
         "category": category
-    }
-    
-    data.append(new_project)
+    })
 
-    # 3. Save the file
-    with open('projects.json', 'w') as f:
+    with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
 
-    print(f"\nSUCCESS: Added '{title}' to {category} category.")
+    print(f"\nSaved '{title}' locally.")
 
-    # 4. Ask to upload
-    confirm = input("\nPush to GitHub now? (y/n): ")
-    if confirm.lower() == 'y':
-        update_github()
-    else:
-        print("Saved locally, but not uploaded.")
+    # Auto Upload
+    update_github()
+    print("\nDone! Refresh your website in a moment.")
+    input("Press Enter to close...")
 
 if __name__ == "__main__":
     main()
