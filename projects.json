@@ -1,16 +1,16 @@
 [
-    {
+        {
         "title": "Kirel text Animation",
         "description": ".",
         "category": "text",
         "url": "text/v1.mp4"
     },
     {
-        "title": "Kinetic Typography",
-        "description": "An upbeat text animation synchronized with high-energy music.",
+        "title": "Kirel Community Text Animation ",
+        "description": "",
         "category": "text",
-        "url": "videos/text-effect.mp4"
-    },
+        "url": "text/v2.mp4"
+    },    
     {
         "title": "Surge Logo Animation",
         "description": "",
