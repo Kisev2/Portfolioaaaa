@@ -1,0 +1,20 @@
+[
+    {
+        "title": "Brand Logo Reveal",
+        "description": "A clean, minimalist logo animation created in After Effects for a tech startup.",
+        "category": "logo",
+        "url": "videos/logo-animation.mp4"
+    },
+    {
+        "title": "Kinetic Typography",
+        "description": "An upbeat text animation synchronized with high-energy music.",
+        "category": "text",
+        "url": "videos/text-effect.mp4"
+    },
+    {
+        "title": "Character Sketch",
+        "description": "A frame-by-frame hand-drawn animation sequence.",
+        "category": "drawing",
+        "url": "videos/drawing-clip.mp4"
+    }
+]
