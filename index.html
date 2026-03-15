@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>KC NAPIZA | Portfolio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Helvetica', sans-serif; background: #000; color: #fff; line-height: 1.6; }
+        nav { position: fixed; width: 100%; padding: 40px; display: flex; justify-content: space-between; z-index: 100; background: linear-gradient(to bottom, black, transparent); }
+        .logo { font-weight: bold; letter-spacing: 2px; }
+        .tabs { display: flex; justify-content: center; gap: 30px; padding: 120px 0 50px; }
+        .tab { background: none; border: 1px solid #333; color: #666; padding: 10px 25px; border-radius: 20px; cursor: pointer; transition: 0.3s; text-transform: uppercase; font-size: 12px; }
+        .tab.active { border-color: #fff; color: #fff; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        .project { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-bottom: 100px; align-items: center; }
+        .project:nth-child(even) { direction: rtl; }
+        .project:nth-child(even) .info { direction: ltr; }
+        video { width: 100%; border-radius: 8px; background: #111; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        h3 { font-size: 28px; margin-bottom: 15px; }
+        p { color: #888; font-size: 15px; }
+    </style>
+</head>
+<body>
+    <nav><div class="logo">KC NAPIZA.</div></nav>
+    <div class="tabs" id="tab-bar">
+        <button class="tab active" onclick="filter('logo')">Logo Animation</button>
+        <button class="tab" onclick="filter('text')">Text Animation</button>
+        <button class="tab" onclick="filter('drawing')">Drawing Animation</button>
+    </div>
+    <div class="container" id="grid"></div>
+
+    <script>
+        let allProjects = [];
+        async function load() {
+            const resp = await fetch('projects.json');
+            allProjects = await resp.json();
+            filter('logo');
+        }
+        function filter(cat) {
+            document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(cat)));
+            const grid = document.getElementById('grid');
+            grid.innerHTML = allProjects.filter(p => p.category === cat).map(p => `
+                <div class="project">
+                    <video controls src="${p.url}"></video>
+                    <div class="info">
+                        <h3>${p.title}</h3>
+                        <p>${p.description}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        load();
+    </script>
+</body>
+</html>
