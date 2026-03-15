@@ -1,75 +1,108 @@
 import json
 import os
 import subprocess
+import time
+import shutil  # To copy the file you select
+from tkinter import filedialog, Tk # To open the file selector
+
+# --- CONFIG ---
+FOLDERS = {
+    "1": "loganima",
+    "2": "textan",
+    "3": "drawan"
+}
 
 def run_git(commands):
-    try:
-        # We use shell=True to help Windows handle the commands better
-        subprocess.run(commands, check=True, capture_output=True, text=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Git Error: {e.stderr}")
+    result = subprocess.run(commands, capture_output=True, text=True)
+    if result.returncode == 0:
+        print(f"DONE: {' '.join(commands)}")
+        return True
+    else:
+        print(f"GIT ERROR: {result.stderr}")
         return False
-    return True
 
-def update_github():
-    print("\n--- Syncing with GitHub ---")
-    
-    # 1. Pull latest (using master branch)
-    run_git(["git", "pull", "origin", "master"])
-    
-    # 2. Add, Commit, Push
-    print("Pushing updates to GitHub...")
-    if run_git(["git", "add", "."]):
-        # The commit message is automatic
-        if run_git(["git", "commit", "-m", "Automatic update via Portfolio Manager"]):
-            if run_git(["git", "push", "origin", "master"]):
-                print("✅ LIVE ON GITHUB!")
-                return
-    print("❌ Upload failed. Make sure you are connected to the internet.")
+def select_file():
+    """Opens a Windows file explorer to pick a video"""
+    root = Tk()
+    root.withdraw() # Hide the tiny white window
+    root.attributes('-topmost', True) # Bring the selector to the front
+    file_path = filedialog.askopenfilename(
+        title="Select your animation video",
+        filetypes=[("Video files", "*.mp4 *.mov *.webm")]
+    )
+    root.destroy()
+    return file_path
 
 def main():
-    print("==========================")
-    print(" KISE PORTFOLIO MANAGER ")
-    print("==========================")
+    print("==============================")
+    print("   KISE MANUAL FILE UPLOADER")
+    print("==============================")
+
+    # 1. Pick the video file from your computer
+    print("\n[STEP 1] Please select your video file...")
+    source_file = select_file()
+
+    if not source_file:
+        print("No file selected. Exiting.")
+        return
     
-    # Load existing data
-    filename = 'projects.json'
-    if os.path.exists(filename) and os.path.getsize(filename) > 0:
-        with open(filename, 'r') as f:
-            try:
-                data = json.load(f)
-            except:
-                data = []
-    else:
+    filename = os.path.basename(source_file)
+    print(f"Selected: {filename}")
+
+    # 2. Select Category
+    print("\n[STEP 2] Which category is this for?")
+    print("1: Logo Animation")
+    print("2: Text Animation")
+    print("3: Drawing Animation")
+    choice = input("Choice (1-3): ")
+    
+    target_dir = FOLDERS.get(choice)
+    if not target_dir:
+        print("Invalid choice.")
+        return
+
+    # Create folder if it doesn't exist
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    # 3. Copy the file into the project folder
+    destination_path = os.path.join(target_dir, filename)
+    print(f"Copying file to {destination_path}...")
+    shutil.copy2(source_file, destination_path)
+
+    # 4. Details
+    auto_title = filename.split('.')[0].replace('_', ' ').replace('-', ' ').title()
+    title = input(f"Title [{auto_title}]: ") or auto_title
+    desc = input("Description: ")
+
+    # 5. Update JSON
+    try:
+        with open('projects.json', 'r') as f:
+            data = json.load(f)
+    except:
         data = []
 
-    # Get Input
-    title = input("\nProject Title: ")
-    url = input("Video Filename (e.g., loganima/1.mp4): ")
-    desc = input("Description: ")
-    print("1: Logo | 2: Text | 3: Drawing")
-    cat_choice = input("Category (1-3): ")
-    
-    cats = {"1": "logo", "2": "text", "3": "drawing"}
-    category = cats.get(cat_choice, "logo")
-
-    # Update Data
+    cat_map = {"1": "logo", "2": "text", "3": "drawing"}
     data.append({
         "title": title,
-        "url": url,
+        "url": f"{target_dir}/{filename}",
         "description": desc,
-        "category": category
+        "category": cat_map[choice]
     })
 
-    with open(filename, 'w') as f:
+    with open('projects.json', 'w') as f:
         json.dump(data, f, indent=4)
 
-    print(f"\nSaved '{title}' locally.")
+    # 6. Upload to GitHub
+    print("\n[STEP 3] Uploading to GitHub...")
+    run_git(["git", "add", "."])
+    run_git(["git", "commit", "-m", f"Added {filename}"])
+    if run_git(["git", "push", "origin", "master"]):
+        print("\n✅ SUCCESS! File copied and uploaded to GitHub.")
+    else:
+        print("\n❌ UPLOAD FAILED. Check your terminal for errors.")
 
-    # Auto Upload
-    update_github()
-    print("\nDone! Refresh your website in a moment.")
-    input("Press Enter to close...")
+    input("\nPress Enter to close...")
 
 if __name__ == "__main__":
     main()
